@@ -1,4 +1,6 @@
-const BASE_URL = "/api";
+const BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? ""
+    : "/api";
 
 const state = {
     token: localStorage.getItem("ttm_token"),
@@ -76,36 +78,33 @@ const elements = {
     logoutButton: document.getElementById("logout-button")
 };
 
-initialize();
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize);
+} else {
+    initialize();
+}
 
 function initialize() {
     bindEvents();
-    syncRouteState();
-
-    if (state.token) {
-        bootstrapSession();
-        return;
-    }
-
-    renderPublicRoute();
+    handleRouteChange();
 }
 
 function bindEvents() {
-    elements.loginTab.addEventListener("click", () => navigateTo(`/login?type=${state.loginType}`));
-    elements.signupTab.addEventListener("click", () => navigateTo("/signup"));
-    elements.memberLoginLink.addEventListener("click", handleLoginEntryNavigation);
-    elements.adminLoginLink.addEventListener("click", handleLoginEntryNavigation);
-    elements.loginForm.addEventListener("submit", handleLogin);
-    elements.signupForm.addEventListener("submit", handleSignup);
-    elements.projectForm.addEventListener("submit", handleProjectSubmit);
-    elements.newProjectButton.addEventListener("click", resetProjectEditor);
-    elements.projectDeleteButton.addEventListener("click", handleProjectDelete);
-    elements.taskForm.addEventListener("submit", handleTaskCreate);
-    elements.taskProject.addEventListener("change", syncTaskAssignees);
-    elements.refreshButton.addEventListener("click", () => refreshWorkspace(false));
-    elements.logoutButton.addEventListener("click", logout);
-    elements.taskFilterApply.addEventListener("click", applyTaskFilters);
-    elements.taskFilterReset.addEventListener("click", resetTaskFilters);
+    elements.loginTab?.addEventListener("click", () => navigateTo(`/login?type=${state.loginType}`));
+    elements.signupTab?.addEventListener("click", () => navigateTo("/signup"));
+    elements.memberLoginLink?.addEventListener("click", handleLoginEntryNavigation);
+    elements.adminLoginLink?.addEventListener("click", handleLoginEntryNavigation);
+    elements.loginForm?.addEventListener("submit", handleLogin);
+    elements.signupForm?.addEventListener("submit", handleSignup);
+    elements.projectForm?.addEventListener("submit", handleProjectSubmit);
+    elements.newProjectButton?.addEventListener("click", resetProjectEditor);
+    elements.projectDeleteButton?.addEventListener("click", handleProjectDelete);
+    elements.taskForm?.addEventListener("submit", handleTaskCreate);
+    elements.taskProject?.addEventListener("change", syncTaskAssignees);
+    elements.refreshButton?.addEventListener("click", () => refreshWorkspace(false));
+    elements.logoutButton?.addEventListener("click", logout);
+    elements.taskFilterApply?.addEventListener("click", applyTaskFilters);
+    elements.taskFilterReset?.addEventListener("click", resetTaskFilters);
 
     elements.taskViewButtons.forEach(button => {
         button.addEventListener("click", () => {
@@ -125,7 +124,17 @@ function handleLoginEntryNavigation(event) {
 }
 
 function handleRouteChange() {
-    syncRouteState();
+    const route = getRouteState();
+
+    if (route.path === "/") {
+        window.history.replaceState({}, "", "/login?type=member");
+        state.loginType = "member";
+    } else if (route.path !== "/login" && route.path !== "/signup" && route.path !== "/admin-dashboard" && route.path !== "/member-dashboard") {
+        window.history.replaceState({}, "", "/login?type=member");
+        state.loginType = "member";
+    } else {
+        syncRouteState();
+    }
 
     if (state.token) {
         if (state.user) {
@@ -147,18 +156,9 @@ function syncRouteState() {
 
 function renderPublicRoute() {
     const route = getRouteState();
-
-    if (route.view === "app") {
-        redirectToLogin(route.role === "ADMIN" ? "admin" : "member", true);
-        return;
-    }
-
-    if (route.path === "/") {
-        redirectToLogin("member", true);
-        return;
-    }
-
-    showAuthView(route.mode, route.loginType);
+    const loginType = route.path === "/login" ? route.loginType : "member";
+    const mode = route.path === "/signup" ? "signup" : "login";
+    showAuthView(mode, loginType);
 }
 
 async function bootstrapSession() {
@@ -210,18 +210,30 @@ async function refreshWorkspace(silent) {
 async function handleLogin(event) {
     event.preventDefault();
 
+    const email = document.getElementById("login-email")?.value.trim() || "";
+    const password = document.getElementById("login-password")?.value || "";
+    const loginPath = `/auth/login?type=${state.loginType}`;
+
     try {
-        const response = await apiRequest(`/auth/login?type=${state.loginType}`, {
+        console.log("Submitting login request", {
+            path: BASE_URL + loginPath,
+            loginType: state.loginType,
+            email
+        });
+
+        const response = await apiRequest(loginPath, {
             method: "POST",
             body: JSON.stringify({
-                email: document.getElementById("login-email").value.trim(),
-                password: document.getElementById("login-password").value
+                email,
+                password
             })
         }, false);
 
+        console.log("Login response received", response);
         state.token = response.accessToken;
         state.user = response.user;
-        storeSession(response.accessToken, response.user);
+        localStorage.setItem("ttm_token", response.accessToken);
+        localStorage.setItem("ttm_user", JSON.stringify(response.user));
         await refreshWorkspace(true);
         redirectToDashboard(response.user.role, true);
         showBanner("Logged in successfully.", "success");
