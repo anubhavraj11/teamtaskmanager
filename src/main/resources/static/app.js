@@ -1,3 +1,5 @@
+const BASE_URL = "/api";
+
 const state = {
     token: localStorage.getItem("ttm_token"),
     user: readStoredJson("ttm_user"),
@@ -1098,7 +1100,7 @@ async function apiRequest(path, options = {}, requiresAuth = true) {
         headers.Authorization = `Bearer ${state.token}`;
     }
 
-    const response = await fetch(path, {
+    const response = await fetch(BASE_URL + path, {
         ...options,
         headers
     });
