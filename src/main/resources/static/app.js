@@ -1,6 +1,4 @@
-const BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? ""
-    : "/api";
+const BASE_URL = "";
 
 const state = {
     token: localStorage.getItem("ttm_token"),
