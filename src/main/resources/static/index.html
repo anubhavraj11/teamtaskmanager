@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Task Manager</title>
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="auth-shell" id="auth-shell">
+    <section class="auth-panel">
+        <div class="auth-copy">
+            <p class="eyebrow">Team Task Manager</p>
+            <h1>Manage projects, assign work, and track delivery.</h1>
+            <p class="supporting-text">Use the admin workspace to manage teams and projects, or sign in as a member to track assigned work.</p>
+        </div>
+        <div class="auth-card">
+            <div class="login-entry-row" id="login-entry-row">
+                <a class="ghost-button login-entry-button" href="/login?type=member" id="member-login-link">Member Login</a>
+                <a class="ghost-button login-entry-button" href="/login?type=admin" id="admin-login-link">Admin Login</a>
+            </div>
+
+            <div class="tab-row">
+                <button class="tab-button is-active" id="login-tab" type="button">Login</button>
+                <button class="tab-button" id="signup-tab" type="button">Signup</button>
+            </div>
+
+            <div class="auth-panel-header" id="auth-panel-header">
+                <p class="section-label" id="auth-panel-label">Member access</p>
+                <h3 id="auth-panel-title">Member login</h3>
+                <p class="auth-panel-note" id="auth-panel-note">Use your member account credentials to continue.</p>
+            </div>
+
+            <div class="status-banner is-hidden" id="auth-status-banner"></div>
+
+            <form class="auth-form" id="login-form">
+                <label class="field">
+                    <span>Email</span>
+                    <input id="login-email" type="email" autocomplete="email" required>
+                </label>
+                <label class="field">
+                    <span>Password</span>
+                    <input id="login-password" type="password" autocomplete="current-password" required>
+                </label>
+                <button class="primary-button" id="login-submit-button" type="submit">Login as Member</button>
+            </form>
+
+            <form class="auth-form is-hidden" id="signup-form">
+                <p class="auth-panel-note">Signup creates a member account. Admin access is granted from the backend only.</p>
+                <label class="field">
+                    <span>Full name</span>
+                    <input id="signup-name" type="text" maxlength="120" required>
+                </label>
+                <label class="field">
+                    <span>Email</span>
+                    <input id="signup-email" type="email" maxlength="160" autocomplete="email" required>
+                </label>
+                <label class="field">
+                    <span>Password</span>
+                    <input id="signup-password" type="password" minlength="8" maxlength="72" autocomplete="new-password" required>
+                </label>
+                <button class="primary-button" type="submit">Create account</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<div class="app-shell is-hidden" id="app-shell">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">Team Task Manager</p>
+            <h2 id="workspace-title">Workspace</h2>
+        </div>
+        <div class="topbar-actions">
+            <div class="user-pill">
+                <span id="current-user-name"></span>
+                <span class="role-badge" id="current-user-role"></span>
+            </div>
+            <button class="secondary-button" id="refresh-button" type="button">Refresh</button>
+            <button class="secondary-button" id="logout-button" type="button">Logout</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <div class="status-banner is-hidden" id="app-status-banner"></div>
+
+        <section class="band">
+            <div class="band-header">
+                <div>
+                    <p class="section-label">Dashboard</p>
+                    <h3 id="dashboard-title">Delivery overview</h3>
+                </div>
+            </div>
+            <div class="metric-grid" id="metric-grid"></div>
+            <div class="status-grid" id="status-grid"></div>
+        </section>
+
+        <section class="band">
+            <div class="band-header">
+                <div>
+                    <p class="section-label">Projects</p>
+                    <h3>Project and team management</h3>
+                </div>
+            </div>
+            <div class="split-layout">
+                <div class="surface">
+                    <div class="surface-header">
+                        <h4>Projects</h4>
+                    </div>
+                    <div class="project-list" id="project-list"></div>
+                </div>
+
+                <div class="surface">
+                    <div class="surface-header">
+                        <h4 id="project-form-title">Create project</h4>
+                        <button class="secondary-button admin-only" id="new-project-button" type="button">New project</button>
+                    </div>
+
+                    <form class="stack-form admin-only" id="project-form">
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Project name</span>
+                                <input id="project-name" type="text" maxlength="120" required>
+                            </label>
+                            <label class="field field-wide">
+                                <span>Description</span>
+                                <textarea id="project-description" maxlength="500" rows="3"></textarea>
+                            </label>
+                        </div>
+                        <div class="button-row">
+                            <button class="primary-button" id="project-submit-button" type="submit">Create project</button>
+                            <button class="danger-button" id="project-delete-button" type="button">Delete project</button>
+                        </div>
+                    </form>
+
+                    <div class="team-panel" id="team-panel"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="band">
+            <div class="band-header">
+                <div>
+                    <p class="section-label">Tasks</p>
+                    <h3 id="task-section-title">Task workspace</h3>
+                </div>
+            </div>
+
+            <div class="surface">
+                <div class="toolbar">
+                    <div class="segmented-group" id="task-view-group">
+                        <button class="tab-button is-active" data-task-view="all" type="button">All Tasks</button>
+                        <button class="tab-button" data-task-view="my" type="button">My Tasks</button>
+                        <button class="tab-button" data-task-view="overdue" type="button">Overdue</button>
+                    </div>
+
+                    <div class="toolbar-grid">
+                        <label class="field">
+                            <span>Search</span>
+                            <input id="task-search" type="text" placeholder="Search title or description">
+                        </label>
+                        <label class="field">
+                            <span>Status</span>
+                            <select id="task-filter-status">
+                                <option value="">All</option>
+                                <option value="TODO">TODO</option>
+                                <option value="IN_PROGRESS">IN PROGRESS</option>
+                                <option value="DONE">DONE</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span>Priority</span>
+                            <select id="task-filter-priority">
+                                <option value="">All</option>
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span>Project</span>
+                            <select id="task-filter-project">
+                                <option value="">All</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="secondary-button" id="task-filter-apply" type="button">Apply filters</button>
+                        <button class="secondary-button" id="task-filter-reset" type="button">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="split-layout split-layout-wide">
+                <div class="surface admin-only">
+                    <div class="surface-header">
+                        <h4>Create task</h4>
+                    </div>
+                    <form class="stack-form" id="task-form">
+                        <div class="form-grid">
+                            <label class="field">
+                                <span>Title</span>
+                                <input id="task-title" type="text" maxlength="150" required>
+                            </label>
+                            <label class="field">
+                                <span>Due date</span>
+                                <input id="task-due-date" type="date" required>
+                            </label>
+                            <label class="field">
+                                <span>Status</span>
+                                <select id="task-status" required>
+                                    <option value="TODO">TODO</option>
+                                    <option value="IN_PROGRESS">IN PROGRESS</option>
+                                    <option value="DONE">DONE</option>
+                                </select>
+                            </label>
+                            <label class="field">
+                                <span>Priority</span>
+                                <select id="task-priority" required>
+                                    <option value="LOW">LOW</option>
+                                    <option value="MEDIUM" selected>MEDIUM</option>
+                                    <option value="HIGH">HIGH</option>
+                                </select>
+                            </label>
+                            <label class="field">
+                                <span>Project</span>
+                                <select id="task-project" required></select>
+                            </label>
+                            <label class="field">
+                                <span>Assign to</span>
+                                <select id="task-assignee" required></select>
+                            </label>
+                            <label class="field field-wide">
+                                <span>Description</span>
+                                <textarea id="task-description" maxlength="1000" rows="4"></textarea>
+                            </label>
+                        </div>
+                        <button class="primary-button" id="task-submit-button" type="submit">Create task</button>
+                    </form>
+                </div>
+
+                <div class="surface">
+                    <div class="surface-header">
+                        <h4 id="task-list-title">Tasks</h4>
+                    </div>
+                    <div class="task-list" id="task-list"></div>
+                    <div class="pagination-row" id="task-pagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="band admin-only">
+            <div class="band-header">
+                <div>
+                    <p class="section-label">People</p>
+                    <h3>User directory</h3>
+                </div>
+            </div>
+            <div class="surface">
+                <div class="user-directory" id="user-directory"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
